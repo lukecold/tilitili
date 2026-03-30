@@ -6,48 +6,61 @@ A command-line video player for Bilibili and YouTube. Search, browse, and play v
 
 - **Multi-source**: Search Bilibili and YouTube from one CLI
 - **PiP playback**: Videos play in a small floating window via [mpv](https://mpv.io/)
-- **Audio-only mode**: Listen without video (minimized/no-video)
+- **Audio-only mode**: Listen without video
 - **Configurable**: Window size, position, always-on-top via `config` command
 - **Prefix history search**: Type a prefix and press Up arrow to search command history
 - **Persistent settings**: Source preference and config saved across sessions
 
-## Prerequisites
+## Quick Start
 
-- [mpv](https://mpv.io/) — video playback (required)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) — YouTube search and stream resolution (required for YouTube, used by mpv for Bilibili)
+### 1. Install prerequisites
 
-Install on macOS:
+tilitili uses [mpv](https://mpv.io/) for video playback and [yt-dlp](https://github.com/yt-dlp/yt-dlp) for stream resolution.
 
+**macOS:**
 ```bash
 brew install mpv yt-dlp
 ```
 
-## Install
-
-### From source
-
+**Linux (Debian/Ubuntu):**
 ```bash
-go install github.com/lukecold/tilitili@latest
+sudo apt install mpv yt-dlp
 ```
 
-### From release
+**Windows:**
+```
+winget install mpv yt-dlp
+```
 
-Download the binary for your platform from [Releases](https://github.com/lukecold/tilitili/releases).
+### 2. Download tilitili
 
-### Build locally
+Go to the [latest release](https://github.com/lukecold/tilitili/releases/latest) and download the binary for your platform:
+
+| Platform | File |
+|---|---|
+| macOS (Apple Silicon) | `tilitili-darwin-arm64` |
+| macOS (Intel) | `tilitili-darwin-amd64` |
+| Linux (x86_64) | `tilitili-linux-amd64` |
+| Linux (ARM64) | `tilitili-linux-arm64` |
+| Windows | `tilitili-windows-amd64.exe` |
+
+**macOS / Linux** — make it executable and move to PATH:
+```bash
+chmod +x tilitili-*
+sudo mv tilitili-* /usr/local/bin/tilitili
+```
+
+**Windows** — rename to `tilitili.exe` and add the folder to your PATH.
+
+### 3. Run it
 
 ```bash
-git clone https://github.com/lukecold/tilitili.git
-cd tilitili
-go build -o tilitili .
+tilitili
 ```
+
+That's it. Type `help` inside tilitili to see all commands.
 
 ## Usage
-
-```bash
-tilitili        # start the interactive CLI
-tilitili start  # same as above
-```
 
 ### Commands
 
@@ -64,8 +77,8 @@ tilitili start  # same as above
 | `play -t <number>` | Open video in a new browser tab |
 | `stop` | Stop current playback |
 | `source` | Show current source |
-| `source bilibili` | Switch to Bilibili |
-| `source youtube` | Switch to YouTube |
+| `source bilibili` | Switch to Bilibili (aliases: `bili`, `b`) |
+| `source youtube` | Switch to YouTube (aliases: `yt`, `y`) |
 | `config` | Configure settings interactively |
 | `help` | Show help |
 | `quit` / `exit` | Exit tilitili |
@@ -102,12 +115,23 @@ Settings are saved to `~/.tilitili/config`.
 - **Prefix + Up arrow**: Search history by prefix (type `sea` then press Up to find previous `search` commands)
 - **Ctrl+C**: Stop current command, or exit if at prompt
 
-## Source aliases
+---
 
-| Source | Aliases |
-|---|---|
-| Bilibili | `bilibili`, `bili`, `b` |
-| YouTube | `youtube`, `yt`, `y` |
+## Building from source
+
+For developers who want to build from source or contribute:
+
+```bash
+# Requires Go 1.22+
+git clone https://github.com/lukecold/tilitili.git
+cd tilitili
+go build -o tilitili .
+```
+
+Or install directly:
+```bash
+go install github.com/lukecold/tilitili@latest
+```
 
 ## License
 
