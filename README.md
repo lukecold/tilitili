@@ -116,6 +116,14 @@ Or install directly:
 go install github.com/lukecold/tilitili@latest
 ```
 
+### Runtime dependencies
+
+tilitili relies on two external tools for video playback and stream resolution. They are auto-downloaded on first run, but you can also install them manually:
+
+- **[mpv](https://mpv.io/)** — A free, open-source media player. tilitili uses it to play video in a small floating PiP window and for audio-only playback. mpv handles hardware-accelerated decoding, on-screen display, and window management.
+
+- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** — A command-line tool for extracting streaming URLs from video sites. mpv uses it under the hood (via its `ytdl_hook`) to resolve Bilibili and YouTube URLs into playable streams. tilitili also calls yt-dlp directly for YouTube search.
+
 ## License
 
-MIT
+[MIT](LICENSE)
