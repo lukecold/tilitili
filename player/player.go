@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -45,9 +46,11 @@ func (p *Player) playMpv(mpvPath, url, title string, audioOnly bool) string {
 	args := []string{
 		"--no-terminal",
 		fmt.Sprintf("--title=%s", title),
-		"--osd-font=Helvetica Neue",
-		"--sub-font=Helvetica Neue",
 	}
+
+	// Use a platform-appropriate OSD/subtitle font
+	font := osdFont()
+	args = append(args, fmt.Sprintf("--osd-font=%s", font), fmt.Sprintf("--sub-font=%s", font))
 
 	if audioOnly {
 		args = append(args, "--no-video")
@@ -121,12 +124,80 @@ func (p *Player) Cleanup() {
 	p.stopMpv()
 }
 
-// --- Browser fallback (used for -t tab mode and when mpv is not installed) ---
+// --- Platform helpers ---
+
+// osdFont returns a font name that exists on the current platform.
+func osdFont() string {
+	switch runtime.GOOS {
+	case "darwin":
+		return "Helvetica Neue"
+	case "windows":
+		return "Segoe UI"
+	default: // linux, freebsd, etc.
+		return "sans-serif"
+	}
+}
+
+// openURL opens a URL in the platform's default browser.
+func openURL(url string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", url)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", "", url)
+	default:
+		cmd = exec.Command("xdg-open", url)
+	}
+	return cmd.Start()
+}
+
+// --- Browser fallback ---
 
 func (p *Player) openInBrowser(url, title string) string {
+	switch runtime.GOOS {
+	case "darwin":
+		return p.openTabDarwin(url, title)
+	default:
+		// Linux/Windows: just open URL (browser decides tab vs window)
+		if err := openURL(url); err != nil {
+			return fmt.Sprintf("Failed to open browser: %v", err)
+		}
+		return fmt.Sprintf("Playing video (browser): %s", title)
+	}
+}
+
+func (p *Player) openInBrowserWindow(url, title string, audioOnly bool) string {
+	switch runtime.GOOS {
+	case "darwin":
+		return p.openWindowDarwin(url, title, audioOnly)
+	default:
+		// Linux/Windows: try chrome --new-window, fall back to default browser
+		if chrome := findChromeLinuxWindows(); chrome != "" {
+			cmd := exec.Command(chrome, "--new-window", url)
+			if err := cmd.Start(); err == nil {
+				if audioOnly {
+					return fmt.Sprintf("Playing audio (browser): %s", title)
+				}
+				return fmt.Sprintf("Playing video (browser): %s", title)
+			}
+		}
+		if err := openURL(url); err != nil {
+			return fmt.Sprintf("Failed to open browser: %v", err)
+		}
+		if audioOnly {
+			return fmt.Sprintf("Playing audio (browser): %s", title)
+		}
+		return fmt.Sprintf("Opened in browser: %s", title)
+	}
+}
+
+// --- macOS-specific browser functions ---
+
+func (p *Player) openTabDarwin(url, title string) string {
 	_, browserApp := defaultBrowserDarwin()
 	if browserApp == "" {
-		exec.Command("open", url).Start()
+		openURL(url)
 		return fmt.Sprintf("Playing video (new tab): %s", title)
 	}
 
@@ -146,15 +217,15 @@ end tell`, browserApp, url)
 		if bilibili.Verbose {
 			log.Printf("[DEBUG] AppleScript tab failed: %s, falling back to open", string(out))
 		}
-		exec.Command("open", url).Start()
+		openURL(url)
 	}
 	return fmt.Sprintf("Playing video (new tab): %s", title)
 }
 
-func (p *Player) openInBrowserWindow(url, title string, audioOnly bool) string {
+func (p *Player) openWindowDarwin(url, title string, audioOnly bool) string {
 	_, browserApp := defaultBrowserDarwin()
 	if browserApp == "" {
-		exec.Command("open", url).Start()
+		openURL(url)
 		return fmt.Sprintf("Opened in browser: %s", title)
 	}
 
@@ -175,7 +246,7 @@ end tell`, browserApp, url)
 		if bilibili.Verbose {
 			log.Printf("[DEBUG] AppleScript window failed: %s, falling back to open", string(out))
 		}
-		exec.Command("open", url).Start()
+		openURL(url)
 	}
 
 	if audioOnly {
@@ -185,7 +256,6 @@ end tell`, browserApp, url)
 }
 
 // defaultBrowserDarwin returns the app path and process name of the default browser.
-// Uses Swift to query NSWorkspace (the only fully reliable method on macOS).
 func defaultBrowserDarwin() (appPath, processName string) {
 	out, err := exec.Command("swift", "-e", `
 import AppKit
@@ -212,4 +282,31 @@ if let url = NSWorkspace.shared.urlForApplication(toOpen: URL(string: "https://e
 		processName = strings.TrimSuffix(base, ".app")
 	}
 	return appPath, processName
+}
+
+// --- Linux/Windows Chrome detection ---
+
+func findChromeLinuxWindows() string {
+	if runtime.GOOS == "windows" {
+		// Common Chrome paths on Windows
+		paths := []string{
+			os.Getenv("PROGRAMFILES") + `\Google\Chrome\Application\chrome.exe`,
+			os.Getenv("PROGRAMFILES(X86)") + `\Google\Chrome\Application\chrome.exe`,
+			os.Getenv("LOCALAPPDATA") + `\Google\Chrome\Application\chrome.exe`,
+			os.Getenv("PROGRAMFILES") + `\Microsoft\Edge\Application\msedge.exe`,
+		}
+		for _, p := range paths {
+			if _, err := os.Stat(p); err == nil {
+				return p
+			}
+		}
+		return ""
+	}
+	// Linux
+	for _, name := range []string{"google-chrome", "google-chrome-stable", "chromium-browser", "chromium", "microsoft-edge"} {
+		if path, err := exec.LookPath(name); err == nil {
+			return path
+		}
+	}
+	return ""
 }
