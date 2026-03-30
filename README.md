@@ -34,15 +34,15 @@ winget install mpv yt-dlp
 
 ### 2. Download tilitili
 
-Go to the [latest release](https://github.com/lukecold/tilitili/releases/latest) and download the binary for your platform:
+Click to download for your platform:
 
-| Platform | File |
+| Platform | Download |
 |---|---|
-| macOS (Apple Silicon) | `tilitili-darwin-arm64` |
-| macOS (Intel) | `tilitili-darwin-amd64` |
-| Linux (x86_64) | `tilitili-linux-amd64` |
-| Linux (ARM64) | `tilitili-linux-arm64` |
-| Windows | `tilitili-windows-amd64.exe` |
+| macOS (Apple Silicon) | [tilitili-darwin-arm64](https://github.com/lukecold/tilitili/releases/latest/download/tilitili-darwin-arm64) |
+| macOS (Intel) | [tilitili-darwin-amd64](https://github.com/lukecold/tilitili/releases/latest/download/tilitili-darwin-amd64) |
+| Linux (x86_64) | [tilitili-linux-amd64](https://github.com/lukecold/tilitili/releases/latest/download/tilitili-linux-amd64) |
+| Linux (ARM64) | [tilitili-linux-arm64](https://github.com/lukecold/tilitili/releases/latest/download/tilitili-linux-arm64) |
+| Windows | [tilitili-windows-amd64.exe](https://github.com/lukecold/tilitili/releases/latest/download/tilitili-windows-amd64.exe) |
 
 **macOS / Linux** — make it executable and move to PATH:
 ```bash
