@@ -12,18 +12,22 @@ import (
 
 // YouTube implements Source using yt-dlp for search and playback.
 type YouTube struct {
-	verbose  bool
-	keyword  string
-	uploader string
-	order    SearchOrder
-	count    int
-	page     int
-	results  []VideoResult
-	offset   int
+	verbose   bool
+	ytdlpPath string // resolved path to yt-dlp binary
+	keyword   string
+	uploader  string
+	order     SearchOrder
+	count     int
+	page      int
+	results   []VideoResult
+	offset    int
 }
 
-func NewYouTube() *YouTube {
-	return &YouTube{count: 3}
+func NewYouTube(ytdlpPath string) *YouTube {
+	if ytdlpPath == "" {
+		ytdlpPath = "yt-dlp" // fallback to PATH
+	}
+	return &YouTube{ytdlpPath: ytdlpPath, count: 3}
 }
 
 func (y *YouTube) Name() string { return "YouTube" }
@@ -63,7 +67,7 @@ func (y *YouTube) fetch(ctx context.Context, count int) ([]VideoResult, error) {
 
 	args := []string{"--flat-playlist", "--dump-json", query}
 
-	cmd := exec.CommandContext(ctx, "yt-dlp", args...)
+	cmd := exec.CommandContext(ctx, y.ytdlpPath, args...)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("yt-dlp search failed: %w", err)

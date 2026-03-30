@@ -13,26 +13,7 @@ A command-line video player for Bilibili and YouTube. Search, browse, and play v
 
 ## Quick Start
 
-### 1. Install prerequisites
-
-tilitili uses [mpv](https://mpv.io/) for video playback and [yt-dlp](https://github.com/yt-dlp/yt-dlp) for stream resolution.
-
-**macOS:**
-```bash
-brew install mpv yt-dlp
-```
-
-**Linux (Debian/Ubuntu):**
-```bash
-sudo apt install mpv yt-dlp
-```
-
-**Windows:**
-```
-winget install mpv yt-dlp
-```
-
-### 2. Download tilitili
+### 1. Download tilitili
 
 Click to download for your platform:
 
@@ -52,13 +33,15 @@ sudo mv tilitili-* /usr/local/bin/tilitili
 
 **Windows** — rename to `tilitili.exe` and add the folder to your PATH.
 
-### 3. Run it
+### 2. Run it
 
 ```bash
 tilitili
 ```
 
-That's it. Type `help` inside tilitili to see all commands.
+On first run, tilitili will automatically download [mpv](https://mpv.io/) and [yt-dlp](https://github.com/yt-dlp/yt-dlp) if they're not already installed. Everything is stored in `~/.tilitili/bin/`.
+
+Type `help` inside tilitili to see all commands.
 
 ## Usage
 

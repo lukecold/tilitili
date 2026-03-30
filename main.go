@@ -13,6 +13,7 @@ import (
 	"github.com/chzyer/readline"
 
 	"tilitili/config"
+	"tilitili/deps"
 	"tilitili/player"
 	"tilitili/source"
 )
@@ -303,15 +304,22 @@ func main() {
 
 	fmt.Print(banner)
 
+	// Auto-download mpv and yt-dlp if not installed
+	mpvPath, ytdlpPath, err := deps.EnsureDeps()
+	if err != nil {
+		fmt.Printf("Warning: %v\n", err)
+		fmt.Println("Some features may not work. Install mpv and yt-dlp manually.")
+	}
+
 	cfg := config.Load()
 	var src source.Source
 	switch strings.ToLower(cfg.Source) {
 	case "youtube", "yt":
-		src = source.NewYouTube()
+		src = source.NewYouTube(ytdlpPath)
 	default:
 		src = source.NewBilibili()
 	}
-	p := player.New(cfg)
+	p := player.New(cfg, mpvPath)
 
 	// Command cancellation: during command execution, Ctrl+C cancels the command.
 	// At the prompt, first Ctrl+C prints a hint, second Ctrl+C (within 2s) exits.
@@ -457,7 +465,7 @@ func main() {
 				cfg.Save()
 				fmt.Println("Switched to Bilibili.")
 			case "youtube", "yt", "y":
-				src = source.NewYouTube()
+				src = source.NewYouTube(ytdlpPath)
 				cfg.Source = "youtube"
 				cfg.Save()
 				fmt.Println("Switched to YouTube.")

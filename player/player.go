@@ -9,19 +9,23 @@ import (
 	"strings"
 	"sync"
 
+	"path/filepath"
+
 	"tilitili/bilibili"
 	"tilitili/config"
+	"tilitili/deps"
 )
 
 // Player manages video/audio playback via mpv or browser fallback.
 type Player struct {
-	mu  sync.Mutex
-	cmd *exec.Cmd // running mpv process, nil if nothing playing
-	Cfg *config.Config
+	mu      sync.Mutex
+	cmd     *exec.Cmd // running mpv process, nil if nothing playing
+	Cfg     *config.Config
+	MpvPath string // resolved path to mpv binary
 }
 
-func New(cfg *config.Config) *Player {
-	return &Player{Cfg: cfg}
+func New(cfg *config.Config, mpvPath string) *Player {
+	return &Player{Cfg: cfg, MpvPath: mpvPath}
 }
 
 func (p *Player) Play(url, title string, audioOnly, newTab bool) string {
@@ -34,8 +38,8 @@ func (p *Player) Play(url, title string, audioOnly, newTab bool) string {
 	p.stopMpv()
 
 	// Try mpv (best experience), fall back to browser
-	if mpvPath, err := exec.LookPath("mpv"); err == nil {
-		return p.playMpv(mpvPath, url, title, audioOnly)
+	if p.MpvPath != "" {
+		return p.playMpv(p.MpvPath, url, title, audioOnly)
 	}
 
 	// No mpv — open in browser as new window
@@ -51,6 +55,15 @@ func (p *Player) playMpv(mpvPath, url, title string, audioOnly bool) string {
 	// Use a platform-appropriate OSD/subtitle font
 	font := osdFont()
 	args = append(args, fmt.Sprintf("--osd-font=%s", font), fmt.Sprintf("--sub-font=%s", font))
+
+	// Tell mpv where to find yt-dlp (in case it's in ~/.tilitili/bin/)
+	ytdlp := filepath.Join(deps.BinDir(), "yt-dlp")
+	if runtime.GOOS == "windows" {
+		ytdlp += ".exe"
+	}
+	if _, err := os.Stat(ytdlp); err == nil {
+		args = append(args, fmt.Sprintf("--script-opts=ytdl_hook-ytdl_path=%s", ytdlp))
+	}
 
 	if audioOnly {
 		args = append(args, "--no-video")
