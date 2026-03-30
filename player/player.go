@@ -11,7 +11,7 @@ import (
 
 	"path/filepath"
 
-	"tilitili/bilibili"
+	"tilitili/source"
 	"tilitili/config"
 	"tilitili/deps"
 )
@@ -78,7 +78,7 @@ func (p *Player) playMpv(mpvPath, url, title string, audioOnly bool) string {
 
 	args = append(args, url)
 
-	if bilibili.Verbose {
+	if source.Verbose {
 		log.Printf("[DEBUG] Running: %s %v", mpvPath, args)
 	}
 
@@ -221,13 +221,13 @@ func (p *Player) openTabDarwin(url, title string) string {
 	activate
 end tell`, browserApp, url)
 
-	if bilibili.Verbose {
+	if source.Verbose {
 		log.Printf("[DEBUG] Opening new tab in %s via AppleScript", browserApp)
 	}
 
 	cmd := exec.Command("osascript", "-e", script)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		if bilibili.Verbose {
+		if source.Verbose {
 			log.Printf("[DEBUG] AppleScript tab failed: %s, falling back to open", string(out))
 		}
 		openURL(url)
@@ -250,13 +250,13 @@ func (p *Player) openWindowDarwin(url, title string, audioOnly bool) string {
 	activate
 end tell`, browserApp, url)
 
-	if bilibili.Verbose {
+	if source.Verbose {
 		log.Printf("[DEBUG] Opening new window in %s via AppleScript", browserApp)
 	}
 
 	cmd := exec.Command("osascript", "-e", script)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		if bilibili.Verbose {
+		if source.Verbose {
 			log.Printf("[DEBUG] AppleScript window failed: %s, falling back to open", string(out))
 		}
 		openURL(url)

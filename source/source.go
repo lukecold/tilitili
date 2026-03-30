@@ -3,9 +3,19 @@ package source
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
+
+// Verbose controls debug logging across all sources and the player.
+var Verbose bool
+
+func debugf(format string, args ...any) {
+	if Verbose {
+		log.Printf("[DEBUG] "+format, args...)
+	}
+}
 
 // VideoResult represents a single video from any source.
 type VideoResult struct {

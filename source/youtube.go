@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os/exec"
 	"sort"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 // YouTube implements Source using yt-dlp for search and playback.
 type YouTube struct {
-	verbose   bool
 	ytdlpPath string // resolved path to yt-dlp binary
 	keyword   string
 	uploader  string
@@ -61,9 +59,7 @@ func (y *YouTube) fetch(ctx context.Context, count int) ([]VideoResult, error) {
 	totalNeeded := y.offset + fetchCount
 	query := fmt.Sprintf("ytsearch%d:%s", totalNeeded, y.keyword)
 
-	if y.verbose {
-		log.Printf("[DEBUG] Running: yt-dlp --flat-playlist --dump-json %q", query)
-	}
+	debugf("Running: yt-dlp --flat-playlist --dump-json %q", query)
 
 	args := []string{"--flat-playlist", "--dump-json", query}
 
@@ -157,7 +153,7 @@ func (y *YouTube) ParseOrder(s string) (SearchOrder, bool) {
 }
 
 func (y *YouTube) SetVerbose(v bool) {
-	y.verbose = v
+	Verbose = v
 }
 
 type ytResult struct {
