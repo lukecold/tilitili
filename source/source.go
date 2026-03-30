@@ -88,5 +88,5 @@ func FormatCount(n int64) string {
 
 // AvailableSources returns the list of supported source names.
 func AvailableSources() []string {
-	return []string{"Bilibili", "YouTube"}
+	return []string{"Bilibili", "YouTube", "Niconico"}
 }

@@ -40,7 +40,7 @@ Commands:
   play -t <number>               Play video in a new browser tab
   play -a <number>               Play audio only (minimized browser)
   source                         Show current source and available sources
-  source <name>                  Switch source (bilibili, youtube)
+  source <name>                  Switch source (bilibili, youtube, niconico)
   config                         Configure settings (video size, position, etc.)
   help                           Show this help
   quit / exit                    Exit tilitili
@@ -316,6 +316,8 @@ func main() {
 	switch strings.ToLower(cfg.Source) {
 	case "youtube", "yt":
 		src = source.NewYouTube(ytdlpPath)
+	case "niconico", "nico":
+		src = source.NewNiconico()
 	default:
 		src = source.NewBilibili()
 	}
@@ -469,6 +471,11 @@ func main() {
 				cfg.Source = "youtube"
 				cfg.Save()
 				fmt.Println("Switched to YouTube.")
+			case "niconico", "nico", "n":
+				src = source.NewNiconico()
+				cfg.Source = "niconico"
+				cfg.Save()
+				fmt.Println("Switched to Niconico.")
 			default:
 				fmt.Printf("Unknown source: %s. Available: %s\n", args[1], strings.Join(source.AvailableSources(), ", "))
 			}
