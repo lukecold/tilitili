@@ -89,8 +89,13 @@ Run `config` to interactively adjust:
 | `video_width` | 25% | PiP window width as percentage of screen |
 | `video_position` | bottom-right | Window position (bottom-right/left, top-right/left) |
 | `ontop` | true | Keep PiP window always on top |
+| `hover_to_show` | false | Hide PiP window until mouse hovers over its area |
 
 Settings are saved to `~/.tilitili/config`.
+
+### Hover-to-show mode
+
+When `hover_to_show` is enabled, the PiP video window stays hidden (minimized and dimmed) until you move your mouse into the corner where the video would appear. Move the mouse away and the window disappears again. This keeps the video out of the way while you work, but instantly accessible when you want it.
 
 ### Keyboard shortcuts
 
