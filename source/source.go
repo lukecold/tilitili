@@ -86,26 +86,62 @@ func FormatCount(n int64) string {
 	return strconv.FormatInt(n, 10)
 }
 
-// uploaderMatches checks if an author name matches the uploader query.
-// Uses word-based matching: at least half of the query words must appear
-// in the author name. This tolerates typos and partial name matches
-// since the platform search already returns relevant results.
+// uploaderMatches checks if an author name fuzzy-matches the uploader query.
+// Each query word must fuzzy-match at least one word in the author name
+// (edit distance <= 2, or substring match).
 func uploaderMatches(author, query string) bool {
-	authorLower := strings.ToLower(author)
-	words := strings.Fields(strings.ToLower(query))
-	if len(words) == 0 {
+	authorWords := strings.Fields(strings.ToLower(author))
+	queryWords := strings.Fields(strings.ToLower(query))
+	if len(queryWords) == 0 {
 		return true
 	}
-	matched := 0
-	for _, w := range words {
-		if strings.Contains(authorLower, w) {
-			matched++
+	for _, qw := range queryWords {
+		found := false
+		for _, aw := range authorWords {
+			if strings.Contains(aw, qw) || strings.Contains(qw, aw) || levenshtein(aw, qw) <= 2 {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
 		}
 	}
-	// For single-word queries, require a match.
-	// For multi-word queries, at least half must match.
-	threshold := (len(words) + 1) / 2
-	return matched >= threshold
+	return true
+}
+
+// levenshtein computes the edit distance between two strings.
+func levenshtein(a, b string) int {
+	if len(a) == 0 {
+		return len(b)
+	}
+	if len(b) == 0 {
+		return len(a)
+	}
+	prev := make([]int, len(b)+1)
+	curr := make([]int, len(b)+1)
+	for j := range prev {
+		prev[j] = j
+	}
+	for i := 1; i <= len(a); i++ {
+		curr[0] = i
+		for j := 1; j <= len(b); j++ {
+			cost := 1
+			if a[i-1] == b[j-1] {
+				cost = 0
+			}
+			curr[j] = min(curr[j-1]+1, min(prev[j]+1, prev[j-1]+cost))
+		}
+		prev, curr = curr, prev
+	}
+	return prev[len(b)]
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // AvailableSources returns the list of supported source names.
