@@ -82,8 +82,7 @@ func (y *YouTube) fetch(ctx context.Context, count int) ([]VideoResult, error) {
 		}
 
 		// Apply uploader filter
-		if y.uploader != "" && !strings.Contains(
-			strings.ToLower(item.Uploader), strings.ToLower(y.uploader)) {
+		if y.uploader != "" && !uploaderMatches(item.Uploader, y.uploader) {
 			continue
 		}
 

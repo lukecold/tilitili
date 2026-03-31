@@ -86,6 +86,28 @@ func FormatCount(n int64) string {
 	return strconv.FormatInt(n, 10)
 }
 
+// uploaderMatches checks if an author name matches the uploader query.
+// Uses word-based matching: at least half of the query words must appear
+// in the author name. This tolerates typos and partial name matches
+// since the platform search already returns relevant results.
+func uploaderMatches(author, query string) bool {
+	authorLower := strings.ToLower(author)
+	words := strings.Fields(strings.ToLower(query))
+	if len(words) == 0 {
+		return true
+	}
+	matched := 0
+	for _, w := range words {
+		if strings.Contains(authorLower, w) {
+			matched++
+		}
+	}
+	// For single-word queries, require a match.
+	// For multi-word queries, at least half must match.
+	threshold := (len(words) + 1) / 2
+	return matched >= threshold
+}
+
 // AvailableSources returns the list of supported source names.
 func AvailableSources() []string {
 	return []string{"Bilibili", "YouTube", "Niconico"}

@@ -235,7 +235,7 @@ func (b *Bilibili) fetchPage(ctx context.Context) error {
 
 		views := parseIntField(item.Play)
 
-		if b.uploader != "" && !strings.Contains(strings.ToLower(item.Author), strings.ToLower(b.uploader)) {
+		if b.uploader != "" && !uploaderMatches(item.Author, b.uploader) {
 			debugf("  Skipping (uploader mismatch): %s by %s", stripHTML(item.Title), item.Author)
 			continue
 		}
