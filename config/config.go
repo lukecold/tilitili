@@ -22,6 +22,8 @@ type Config struct {
 	VideoPosition string `json:"video_position"`
 	// Ontop keeps the PiP window always on top.
 	Ontop bool `json:"ontop"`
+	// HoverToShow makes the PiP window transparent until the mouse hovers over it.
+	HoverToShow bool `json:"hover_to_show"`
 	// Source is the last used video source (e.g. "bilibili", "youtube").
 	Source string `json:"source"`
 }
@@ -132,6 +134,22 @@ func (c *Config) Parameters() []Parameter {
 					c.Ontop = true
 				case "false", "0", "no":
 					c.Ontop = false
+				default:
+					return fmt.Errorf("must be true or false")
+				}
+				return nil
+			},
+		},
+		{
+			Name:        "hover_to_show",
+			Description: "Hide PiP window until mouse hovers over it (true/false)",
+			Value:       fmt.Sprintf("%t", c.HoverToShow),
+			Set: func(val string) error {
+				switch strings.ToLower(val) {
+				case "true", "1", "yes":
+					c.HoverToShow = true
+				case "false", "0", "no":
+					c.HoverToShow = false
 				default:
 					return fmt.Errorf("must be true or false")
 				}

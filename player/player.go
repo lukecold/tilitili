@@ -19,9 +19,10 @@ import (
 // Player manages video/audio playback via mpv or browser fallback.
 type Player struct {
 	mu      sync.Mutex
-	cmd     *exec.Cmd // running mpv process, nil if nothing playing
+	cmd     *exec.Cmd       // running mpv process, nil if nothing playing
+	hover   *hoverWatcher   // hover watcher, nil if disabled
 	Cfg     *config.Config
-	MpvPath string // resolved path to mpv binary
+	MpvPath string          // resolved path to mpv binary
 }
 
 func New(cfg *config.Config, mpvPath string) *Player {
@@ -56,13 +57,33 @@ func (p *Player) playMpv(mpvPath, url, title string, audioOnly bool) string {
 	font := osdFont()
 	args = append(args, fmt.Sprintf("--osd-font=%s", font), fmt.Sprintf("--sub-font=%s", font))
 
+	// Collect --script-opts parts (mpv only supports one --script-opts flag)
+	var scriptOpts []string
+
 	// Tell mpv where to find yt-dlp (in case it's in ~/.tilitili/bin/)
 	ytdlp := filepath.Join(deps.BinDir(), "yt-dlp")
 	if runtime.GOOS == "windows" {
 		ytdlp += ".exe"
 	}
 	if _, err := os.Stat(ytdlp); err == nil {
-		args = append(args, fmt.Sprintf("--script-opts=ytdl_hook-ytdl_path=%s", ytdlp))
+		scriptOpts = append(scriptOpts, fmt.Sprintf("ytdl_hook-ytdl_path=%s", ytdlp))
+	}
+
+	// Set up hover-to-show for video mode (not audio-only)
+	var hw *hoverWatcher
+	if !audioOnly && p.Cfg.HoverToShow {
+		hoverArgs, watcher, err := setupHover()
+		if err != nil {
+			fmt.Printf("Hover setup failed: %v\n", err)
+		} else {
+			hw = watcher
+			args = append(args, hoverArgs...)
+		}
+	}
+
+	// Merge all script-opts into one flag
+	if len(scriptOpts) > 0 {
+		args = append(args, fmt.Sprintf("--script-opts=%s", strings.Join(scriptOpts, ",")))
 	}
 
 	if audioOnly {
@@ -73,6 +94,10 @@ func (p *Player) playMpv(mpvPath, url, title string, audioOnly bool) string {
 		args = append(args, fmt.Sprintf("--geometry=%s", geometry))
 		if p.Cfg.Ontop {
 			args = append(args, "--ontop")
+		}
+		// Remove border for cleaner hover effect
+		if p.Cfg.HoverToShow {
+			args = append(args, "--no-border")
 		}
 	}
 
@@ -90,16 +115,26 @@ func (p *Player) playMpv(mpvPath, url, title string, audioOnly bool) string {
 		return fmt.Sprintf("Failed to start mpv: %v", err)
 	}
 
+	// Start hover watcher after mpv is running
+	if hw != nil {
+		hw.start()
+	}
+
 	p.mu.Lock()
 	p.cmd = cmd
+	p.hover = hw
 	p.mu.Unlock()
 
-	// Wait for mpv to finish in background, then clear the reference
+	// Wait for mpv to finish in background, then clean up
 	go func() {
 		cmd.Wait()
 		p.mu.Lock()
 		if p.cmd == cmd {
 			p.cmd = nil
+			if p.hover != nil {
+				p.hover.stop()
+				p.hover = nil
+			}
 		}
 		p.mu.Unlock()
 	}()
@@ -120,13 +155,18 @@ func (p *Player) Stop() string {
 func (p *Player) stopMpv() bool {
 	p.mu.Lock()
 	cmd := p.cmd
+	hw := p.hover
 	p.mu.Unlock()
 
 	if cmd != nil && cmd.Process != nil {
+		if hw != nil {
+			hw.stop()
+		}
 		cmd.Process.Kill()
 		cmd.Wait()
 		p.mu.Lock()
 		p.cmd = nil
+		p.hover = nil
 		p.mu.Unlock()
 		return true
 	}

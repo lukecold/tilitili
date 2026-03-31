@@ -2,3 +2,4 @@ tilitili
 *.egg-info/
 __pycache__/
 .claude/
+.DS_Store
